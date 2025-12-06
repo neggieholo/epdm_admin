@@ -4,12 +4,13 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 // Reusable Editor component
 const TiptapEditor = ({ value, onChange }) => {
     const editor = useEditor({
         extensions: [
-            StarterKit.configure({ link: false }), // 👈 disable default link
+            StarterKit.configure({ link: false }), 
             Link.configure({
                 openOnClick: true,
                 autolink: true,
@@ -39,29 +40,42 @@ const TiptapEditor = ({ value, onChange }) => {
     );
 };
 
-const ProjectInterviewCreator = () => {
+const IndustryContentCreator = () => {
     const [heading, setHeading] = useState("");
     const [sections, setSections] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const apiUrl = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
+    const location = useLocation();
+    const { urlEndpoint, name, dataName } = location.state || {};
+
+    
+    const MAX_PDF_SIZE = 10 * 1024 * 1024; 
 
     const handleAddSection = (type) => {
-        if (type === "image" || type === "video") {
+        if (type === "pdf") {
+        if (sections.some((s) => s.type === "pdf")) return;
+    }
+        if (type === "image" || type === "video" || type === "pdf") {
             setSections([...sections, { type, content: "", caption: "" }]);
         } else {
             setSections([...sections, { type, content: "" }]);
         }
     };
 
+    const handlePdfChange = (index, file) => {
+        if (file.size > MAX_PDF_SIZE) {
+            toast.error("PDF cannot exceed 10 MB");
+            return;
+        }
+        handleChange(index, file, "content");
+    };
 
     const handleChange = (index, value, field = "content") => {
         const updated = [...sections];
         updated[index][field] = value;
         setSections(updated);
     };
-
 
     const handleRemoveSection = (index) => {
         setSections(sections.filter((_, i) => i !== index));
@@ -73,15 +87,18 @@ const ProjectInterviewCreator = () => {
             return;
         }
 
-        // Validate only paragraph sections
         if (sections.some((s) => s.type === "paragraph" && (!s.content || !s.content.trim()))) {
             toast.error("All paragraph sections must have content");
             return;
         }
 
-        // Optional: Validate media sections
         if (sections.some((s) => (s.type === "image" || s.type === "video") && !(s.content instanceof File))) {
             toast.error("All image/video sections must have a file");
+            return;
+        }
+
+        if (sections.some((s) => s.type === "pdf" && !(s.content instanceof File))) {
+            toast.error("All PDF sections must have a file");
             return;
         }
 
@@ -90,35 +107,33 @@ const ProjectInterviewCreator = () => {
             const formData = new FormData();
             formData.append("heading", heading);
 
-            // Replace any file-type section with placeholder
+            // Prepare sections JSON (replace file contents with placeholder)
             const preparedSections = sections.map((s) => {
-                if (s.type === "image" || s.type === "video") {
-                    if (s.content instanceof File) {
-                        return { ...s, content: "__UPLOAD__" }; // keep caption
-                    }
+                if ((s.type === "image" || s.type === "video" || s.type === "pdf") && s.content instanceof File) {
+                    return { ...s, content: "__UPLOAD__" };
                 }
                 return s;
             });
 
-            // Add sections JSON
             formData.append("sections", JSON.stringify(preparedSections));
 
-            // Append files in order
+            // Append actual files
             sections.forEach((s) => {
-                if ((s.type === "image" || s.type === "video") && s.content instanceof File) {
+                if ((s.type === "image" || s.type === "video" || s.type === "pdf") && s.content instanceof File) {
                     formData.append("media", s.content);
+                    console.log("Appending file:", s.content.name,"Type:", s.type);
                 }
             });
 
-            const res = await fetch(`${apiUrl}/project_interview/create`, {
+            const res = await fetch(`${apiUrl}/${urlEndpoint}/create`, {
                 method: "POST",
                 body: formData,
-                credentials: "include"
+                credentials: "include",
             });
 
             const data = await res.json();
             if (data.success) {
-                toast.success("News created successfully");
+                toast.success("Content created successfully");
                 setHeading("");
                 setSections([]);
             } else {
@@ -132,6 +147,8 @@ const ProjectInterviewCreator = () => {
         }
     };
 
+    if (!urlEndpoint) return <p>No endpoint provided.</p>;
+
     return (
         <div
             className="p-4 d-flex flex-column"
@@ -141,16 +158,15 @@ const ProjectInterviewCreator = () => {
                 backgroundColor: "#778ca9",
                 borderRadius: "10px",
                 color: "#f2f7ffff",
-                height: '80vh'
+                height: "80vh",
             }}
         >
-            <h1 className="mb-4 text-center">Upload Project Interview</h1>
-            <hr style={{ borderColor: "#f2f7ffff" }}/>
+            <h1 className="mb-4 text-center">Upload {name}</h1>
+            <hr style={{ borderColor: "#f2f7ffff" }} />
 
-            {/* Compulsory Heading */}
             <div className="mb-4">
                 <label>
-                    <strong>Interview Heading *</strong>
+                    <strong>{name} Heading *</strong>
                 </label>
                 <input
                     type="text"
@@ -161,24 +177,20 @@ const ProjectInterviewCreator = () => {
                 />
             </div>
 
-            {/* Sections */}
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
                 {sections.map((section, index) => (
                     <div key={index} className="border p-3 rounded mb-3">
                         <div className="d-flex justify-content-between mb-2">
                             <strong>{section.type.toUpperCase()}</strong>
-                            {index >= 0 && (
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-danger"
-                                    onClick={() => handleRemoveSection(index)}
-                                >
-                                    ×
-                                </button>
-                            )}
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleRemoveSection(index)}
+                            >
+                                ×
+                            </button>
                         </div>
 
-                        {/* Paragraph / Heading -> Tiptap Editor */}
                         {section.type === "paragraph" && (
                             <TiptapEditor
                                 value={section.content}
@@ -192,14 +204,18 @@ const ProjectInterviewCreator = () => {
                                     type="file"
                                     accept="image/*"
                                     className="form-control mb-2"
-                                    onChange={(e) => handleChange(index, e.target.files[0], "content")}
+                                    onChange={(e) =>
+                                        handleChange(index, e.target.files[0], "content")
+                                    }
                                 />
                                 <input
                                     type="text"
                                     className="form-control"
                                     placeholder="Optional caption"
                                     value={section.caption || ""}
-                                    onChange={(e) => handleChange(index, e.target.value, "caption")}
+                                    onChange={(e) =>
+                                        handleChange(index, e.target.value, "caption")
+                                    }
                                 />
                             </>
                         )}
@@ -210,47 +226,62 @@ const ProjectInterviewCreator = () => {
                                     type="file"
                                     accept="video/*"
                                     className="form-control mb-2"
-                                    onChange={(e) => handleChange(index, e.target.files[0], "content")}
+                                    onChange={(e) =>
+                                        handleChange(index, e.target.files[0], "content")
+                                    }
                                 />
                                 <input
                                     type="text"
                                     className="form-control"
                                     placeholder="Optional caption"
                                     value={section.caption || ""}
-                                    onChange={(e) => handleChange(index, e.target.value, "caption")}
+                                    onChange={(e) =>
+                                        handleChange(index, e.target.value, "caption")
+                                    }
                                 />
                             </>
                         )}
 
+                        {section.type === "pdf" && (
+                            <>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    className="form-control mb-2"
+                                    onChange={(e) => handlePdfChange(index, e.target.files[0])}
+                                />
+
+                                {/* <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Optional description"
+                                    value={section.caption || ""}
+                                    onChange={(e) =>
+                                        handleChange(index, e.target.value, "caption")
+                                    }
+                                /> */}
+                            </>
+                        )}
                     </div>
                 ))}
             </div>
 
-            {/* Add Section Buttons */}
             <div className="d-flex gap-2 mt-3">
-                <button
-                    className="btn btn-light"
-                    onClick={() => handleAddSection("paragraph")}
-                >
+                <button className="btn btn-light" onClick={() => handleAddSection("paragraph")}>
                     + Paragraph
                 </button>
-                <button
-                    className="btn btn-light"
-                    onClick={() => handleAddSection("image")}
-                >
+                <button className="btn btn-light" onClick={() => handleAddSection("image")}>
                     + Image
                 </button>
-                <button
-                    className="btn btn-light"
-                    onClick={() => handleAddSection("video")}
-                >
+                <button className="btn btn-light" onClick={() => handleAddSection("video")}>
                     + Video
+                </button>
+                <button className="btn btn-light" onClick={() => handleAddSection("pdf")} disabled={sections.some((s) => s.type === "pdf")}>
+                    + PDF
                 </button>
             </div>
 
-            {/* Save */}
             <div className="mt-4 d-flex gap-3">
-                {/* Save button */}
                 <button
                     className="btn"
                     onClick={handleSave}
@@ -265,7 +296,7 @@ const ProjectInterviewCreator = () => {
                         "Save"
                     )}
                 </button>
-                {/* Third button (example: Reset form without navigation) */}
+
                 <button
                     className="btn btn-danger"
                     style={{ width: "120px" }}
@@ -277,8 +308,6 @@ const ProjectInterviewCreator = () => {
                     Cancel
                 </button>
 
-
-                {/* Cancel button */}
                 <button
                     className="btn"
                     style={{ backgroundColor: "#293b53", color: "#fff", width: "120px" }}
@@ -290,16 +319,25 @@ const ProjectInterviewCreator = () => {
                 >
                     Back
                 </button>
+
                 <button
                     className="btn"
                     style={{ backgroundColor: "#293b53", color: "#fff", width: "120px" }}
-                    onClick={() => navigate("/admin/view_interviews")}
+                    onClick={() =>
+                        navigate("/admin/view_industryList", {
+                            state: {
+                                urlEndpoint: urlEndpoint,
+                                name: name,
+                                dataName: dataName,
+                            },
+                        })
+                    }
                 >
-                    All Interviews
+                    All {name}
                 </button>
             </div>
         </div>
     );
 };
 
-export default ProjectInterviewCreator;
+export default IndustryContentCreator;

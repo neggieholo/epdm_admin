@@ -35,6 +35,12 @@ import NewsLinksCreator from './AdminComponents/NewsLinksCreator.jsx';
 import UsersInfo from './AdminComponents/UsersInfo.jsx';
 import SendUserEmail from './AdminComponents/SendUserEmail.jsx';
 import EditPartners from './AdminComponents/EditPartners.jsx';
+import IndustryInfoDashboard from './AdminComponents/IndustryInfoDashboard.tsx';
+import IndustryPreview from './AdminComponents/IndustryPreview.jsx';
+import IndustryContentCreator from './AdminComponents/IndustryContentCreator.jsx';
+import IndustryInfoList from './AdminComponents/IndustryInfoList.jsx';
+
+
 
 const router = createBrowserRouter([
   {
@@ -146,6 +152,10 @@ const router = createBrowserRouter([
         element: <EditPreviewNews/>
       },
       {
+        path: "admin/industry_preview",
+        element: <IndustryPreview/>
+      },
+      {
         path: "admin/edit_partners",
         element: <EditPartners/>
       },
@@ -153,6 +163,18 @@ const router = createBrowserRouter([
         path: "admin/send_user_email",
         element: <SendUserEmail/>
       },
+      {
+        path: "admin/industry_info_dashboard",
+        element: <IndustryInfoDashboard />
+      },
+      {
+        path: "admin/edit_industryInfo",
+        element: <IndustryContentCreator />
+      },
+      {
+        path: "admin/view_industryList",
+        element: <IndustryInfoList />
+      }
     ]
   }
 ])

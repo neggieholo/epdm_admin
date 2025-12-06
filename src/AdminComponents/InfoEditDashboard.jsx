@@ -40,8 +40,8 @@ const InfoEditDashboard = () => {
                         </button>
                     </div>
                     <div className="col-md-6">
-                        <button className="btn color-background-light w-100 py-3 fw-bold shadow" onClick={() => navigate("/admin/set_interviews")}>
-                            Project Interview
+                        <button className="btn color-background-light w-100 py-3 fw-bold shadow" onClick={() => navigate("/admin/industry_info_dashboard")}>
+                            Industry Info
                         </button>
                     </div>
                     <div className="col-md-6">
@@ -62,11 +62,6 @@ const InfoEditDashboard = () => {
                     <div className="col-md-6">
                         <button className="btn color-background-light w-100 py-3 fw-bold shadow" onClick={() => navigate("/admin/edit_terms")}>
                             Ts and Cs
-                        </button>
-                    </div>
-                    <div className="col-md-6">
-                        <button className="btn color-background-light w-100 py-3 fw-bold shadow" onClick={() => navigate("/admin/set_newsLinks")}>
-                            News Links
                         </button>
                     </div>
                 </div>

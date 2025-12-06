@@ -175,7 +175,7 @@ const NewsLinksCreator = ({ onSubmit }) => {
                     Cancel
                 </button>
                 <button type="button" className="btn color-background-dark text-light"
-                    onClick={() => navigate("/admin/edit_info")}>
+                    onClick={() => navigate("/admin/industry_info_dashboard")}>
                     Back
                 </button>
             </div>

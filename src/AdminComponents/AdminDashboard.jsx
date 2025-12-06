@@ -12,7 +12,7 @@ const AdminDashboard = () => {
             credentials: 'include',
         }); 
         await localforage.clear();
-        navigate("/admin")
+        navigate("/")
     }
     return (
         <div className='p-2' style={{ width: '40%', minWidth: '350px', backgroundColor: '#778ca9', borderRadius: '10px', color: '#f2f7ffff' }}>
