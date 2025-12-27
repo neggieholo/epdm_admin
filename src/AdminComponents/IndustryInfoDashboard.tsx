@@ -26,7 +26,7 @@ const IndustryInfoDashboard = () => {
                     </div>
                     <div className="col-md-6">
                         <button className="btn color-background-dark text-white w-100 py-3 fw-bold shadow" onClick={() => navigate("/admin/edit_industryData")}>
-                            Industry Data
+                            Energy Data
                         </button>
                     </div>
                     <div className="col-md-6">
@@ -81,7 +81,7 @@ const IndustryInfoDashboard = () => {
                                 },
                             })
                         }>
-                            Industry Challenge
+                            Energy Challenge
                         </button>
                     </div>                    
                     <div className="col-md-6">
